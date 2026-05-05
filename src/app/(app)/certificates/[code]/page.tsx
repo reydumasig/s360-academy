@@ -100,23 +100,33 @@ export default async function CertificatePage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* Bottom — signature + cert ID */}
-            <div className="w-full flex items-end justify-between">
-              {/* Signer */}
-              <div>
-                <div className="w-32 h-px bg-[#E7C36A]/50 print:bg-[#c9a84c] mb-2" />
-                <p className="text-[#F2F4F8] print:text-[#111] font-semibold text-sm" style={{ fontFamily: 'Georgia, serif' }}>
-                  Rey Leonard Dumasig
-                </p>
-                <p className="text-[#8A93A8] print:text-[#555] text-[10px] mt-0.5">
-                  Founder &amp; CEO, Summit 360
-                </p>
-              </div>
+            {/* Bottom — signatories + cert ID */}
+            <div className="w-full">
+              <div className="flex items-end justify-between gap-4">
+                {/* Three signatories */}
+                <div className="flex items-end gap-6 flex-1">
+                  {[
+                    { name: 'Lane Elmer', title: 'CEO' },
+                    { name: 'Adot Diuyan', title: 'COO' },
+                    { name: 'Rey Dumasig', title: 'Director, AI & Technology' },
+                  ].map((s) => (
+                    <div key={s.name} className="min-w-0">
+                      <div className="w-24 h-px bg-[#E7C36A]/50 print:bg-[#c9a84c] mb-2" />
+                      <p className="text-[#F2F4F8] print:text-[#111] font-semibold text-xs leading-snug" style={{ fontFamily: 'Georgia, serif' }}>
+                        {s.name}
+                      </p>
+                      <p className="text-[#8A93A8] print:text-[#555] text-[9px] mt-0.5 whitespace-nowrap">
+                        {s.title}
+                      </p>
+                    </div>
+                  ))}
+                </div>
 
-              {/* Date + cert ID */}
-              <div className="text-right">
-                <p className="text-[#C5CAD8] print:text-[#333] text-xs mb-1">{issuedDate}</p>
-                <p className="font-mono text-[10px] text-[#8A93A8] print:text-[#666]">{cert.cert_id}</p>
+                {/* Date + cert ID */}
+                <div className="text-right shrink-0">
+                  <p className="text-[#C5CAD8] print:text-[#333] text-xs mb-1">{issuedDate}</p>
+                  <p className="font-mono text-[10px] text-[#8A93A8] print:text-[#666]">{cert.cert_id}</p>
+                </div>
               </div>
             </div>
 

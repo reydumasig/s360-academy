@@ -94,14 +94,22 @@ export async function sendCertificateEmail({
         </td>
       </tr>
 
-      <!-- Signature -->
+      <!-- Signatories -->
       <tr>
         <td style="padding:0 40px 40px;">
-          <table cellpadding="0" cellspacing="0" style="border-top:1px solid #2A3044;padding-top:28px;width:100%;">
+          <table cellpadding="0" cellspacing="0" style="border-top:1px solid #2A3044;padding-top:24px;width:100%;">
             <tr>
+              <td style="padding-right:24px;">
+                <p style="margin:0 0 2px;font-family:Georgia,serif;font-size:13px;font-weight:700;color:#F2F4F8;">Lane Elmer</p>
+                <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#8A93A8;">CEO, Summit 360</p>
+              </td>
+              <td style="padding-right:24px;">
+                <p style="margin:0 0 2px;font-family:Georgia,serif;font-size:13px;font-weight:700;color:#F2F4F8;">Adot Diuyan</p>
+                <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#8A93A8;">COO, Summit 360</p>
+              </td>
               <td>
-                <p style="margin:0 0 2px;font-size:15px;font-weight:700;color:#F2F4F8;">Rey Leonard Dumasig</p>
-                <p style="margin:0;font-family:Arial,sans-serif;font-size:12px;color:#8A93A8;">Founder &amp; CEO, Summit 360</p>
+                <p style="margin:0 0 2px;font-family:Georgia,serif;font-size:13px;font-weight:700;color:#F2F4F8;">Rey Dumasig</p>
+                <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#8A93A8;">Director, AI &amp; Technology</p>
               </td>
             </tr>
           </table>
