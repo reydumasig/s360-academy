@@ -1,8 +1,14 @@
-import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+})
 
-const FROM = 'S360 Academy <academy@s360team.com>'
+const FROM = `S360 Academy <${process.env.GMAIL_USER}>`
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://s360-academy-phi.vercel.app'
 
 export async function sendCertificateEmail({
@@ -119,7 +125,7 @@ export async function sendCertificateEmail({
 
   const text = `Congratulations, ${learnerName}!\n\nYou have completed ${moduleTitle} — ${levelLabel}.\n\nCertificate ID: ${certId}\nIssued: ${dateStr}\n\nView your certificate: ${certUrl}\n\n— Rey Leonard Dumasig, Founder & CEO, Summit 360`
 
-  return resend.emails.send({
+  return transporter.sendMail({
     from: FROM,
     to,
     subject: `🎓 Certificate earned — ${moduleTitle}`,
