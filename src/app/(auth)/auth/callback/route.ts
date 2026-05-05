@@ -17,7 +17,7 @@ export async function GET(request: Request) {
         'Pathfinder'
 
       // Admin client bypasses RLS for reliable DB reads/writes on this server route
-      const admin = await createAdminClient()
+      const admin = createAdminClient()
 
       const { data: existing } = await admin
         .from('learners')

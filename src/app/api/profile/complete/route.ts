@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Name must be at least 2 characters.' }, { status: 400 })
   }
 
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
   const { error } = await admin.from('learners').upsert(
     { id: user.id, name, role },
     { onConflict: 'id' }
