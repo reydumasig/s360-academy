@@ -1,25 +1,33 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { MODULE_ORDER, LEVELS, isUnlocked, computeStats } from '@/lib/modules'
+import { LEVELS, isUnlocked, computeStats } from '@/lib/modules'
 import type { ModuleWithProgress } from '@/types'
 import ModuleCard from '@/components/modules/module-card'
 import LevelHeader from '@/components/modules/level-header'
+
+type ModuleRow = {
+  code: string; title: string; subtitle: string
+  level_key: string; level_label: string; duration_min: number; sort_order: number
+}
+type ProgressRow = { module_code: string; started_at: string; completed_at: string | null; score: number | null }
 
 export default async function ModulesPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: modulesData }, { data: progressData }] = await Promise.all([
+  const [{ data: learnerRaw }, { data: modulesRaw }, { data: progressRaw }] = await Promise.all([
+    supabase.from('learners').select('name').eq('id', user.id).single(),
     supabase.from('modules').select('code,title,subtitle,level_key,level_label,duration_min,sort_order').order('sort_order'),
     supabase.from('module_progress').select('module_code,started_at,completed_at,score').eq('learner_id', user.id),
   ])
 
-  const progressMap = new Map(
-    (progressData ?? []).map((p) => [p.module_code, p])
-  )
+  const learnerName = (learnerRaw as { name: string } | null)?.name ?? 'Pathfinder'
+  const modulesData = (modulesRaw ?? []) as ModuleRow[]
+  const progressData = (progressRaw ?? []) as ProgressRow[]
+  const progressMap = new Map(progressData.map((p) => [p.module_code, p]))
 
-  const modules: ModuleWithProgress[] = (modulesData ?? []).map((m) => {
+  const modules: ModuleWithProgress[] = modulesData.map((m) => {
     const progress = progressMap.get(m.code)
     return {
       ...m,
@@ -29,13 +37,12 @@ export default async function ModulesPage() {
       unlocked: false,
     }
   })
-
-  // Compute unlock states (needs ordered list first)
-  modules.forEach((m) => {
-    m.unlocked = isUnlocked(m.code, modules)
-  })
+  modules.forEach((m) => { m.unlocked = isUnlocked(m.code, modules) })
 
   const stats = computeStats(modules)
+
+  // Find next module to work on
+  const nextUp = modules.find((m) => m.unlocked && !m.completed)
 
   const modulesByLevel = LEVELS.map((level) => ({
     ...level,
@@ -44,25 +51,40 @@ export default async function ModulesPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+
       {/* Hero */}
       <section className="mb-12">
+        <p className="text-[#8A93A8] text-sm mb-1">
+          Welcome back, <span className="text-[#C5CAD8] font-medium">{learnerName}</span>
+        </p>
         <h1
-          className="text-3xl sm:text-4xl font-bold text-[#F2F4F8] mb-2"
+          className="text-3xl sm:text-4xl font-bold text-[#F2F4F8] mb-6"
           style={{ fontFamily: 'Georgia, serif' }}
         >
           Pathfinder AI Academy
         </h1>
-        <p className="text-[#8A93A8] mb-8 max-w-xl">
-          15 modules across 5 levels. Complete each module to unlock the next.
-        </p>
+
+        {/* Progress bar */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs text-[#8A93A8]">Overall progress</span>
+            <span className="text-xs font-medium text-[#2EA8BE]">{stats.percent}%</span>
+          </div>
+          <div className="h-1.5 bg-[#2A3044] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#1F7A8C] rounded-full transition-all duration-500"
+              style={{ width: `${stats.percent}%` }}
+            />
+          </div>
+        </div>
 
         {/* Stat tiles */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
             { label: 'Modules completed', value: `${stats.completed} / ${stats.total}` },
             { label: 'Progress', value: `${stats.percent}%` },
-            { label: 'Minutes completed', value: stats.minutes_completed.toString() },
-            { label: 'Minutes total', value: stats.minutes_total.toString() },
+            { label: 'Hours completed', value: `${Math.round(stats.minutes_completed / 60 * 10) / 10}h` },
+            { label: 'Total hours', value: `${Math.round(stats.minutes_total / 60 * 10) / 10}h` },
           ].map(({ label, value }) => (
             <div key={label} className="bg-[#1C2030] border border-[#2A3044] rounded-xl p-4">
               <div className="text-2xl font-bold text-[#1F7A8C]">{value}</div>
@@ -70,6 +92,37 @@ export default async function ModulesPage() {
             </div>
           ))}
         </div>
+
+        {/* Next up nudge */}
+        {nextUp && stats.completed === 0 && (
+          <div className="bg-[#1F7A8C]/10 border border-[#1F7A8C]/25 rounded-xl px-5 py-4 flex items-center gap-4">
+            <div className="flex-1">
+              <p className="text-xs text-[#2EA8BE] font-medium uppercase tracking-wide mb-0.5">Start here</p>
+              <p className="text-[#F2F4F8] font-medium text-sm" style={{ fontFamily: 'Georgia, serif' }}>
+                {nextUp.title}
+              </p>
+            </div>
+            <span className="text-[#2EA8BE] text-sm font-medium shrink-0">{nextUp.duration_min} min →</span>
+          </div>
+        )}
+        {nextUp && stats.completed > 0 && (
+          <div className="bg-[#1F7A8C]/10 border border-[#1F7A8C]/25 rounded-xl px-5 py-4 flex items-center gap-4">
+            <div className="flex-1">
+              <p className="text-xs text-[#2EA8BE] font-medium uppercase tracking-wide mb-0.5">Next up</p>
+              <p className="text-[#F2F4F8] font-medium text-sm" style={{ fontFamily: 'Georgia, serif' }}>
+                {nextUp.title}
+              </p>
+            </div>
+            <span className="text-[#2EA8BE] text-sm font-medium shrink-0">{nextUp.duration_min} min →</span>
+          </div>
+        )}
+        {!nextUp && stats.completed === stats.total && stats.total > 0 && (
+          <div className="bg-[#E7C36A]/10 border border-[#E7C36A]/25 rounded-xl px-5 py-4">
+            <p className="text-[#E7C36A] font-semibold" style={{ fontFamily: 'Georgia, serif' }}>
+              🎉 Academy complete — all 15 modules finished.
+            </p>
+          </div>
+        )}
       </section>
 
       {/* Modules by level */}

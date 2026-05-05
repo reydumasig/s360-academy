@@ -14,33 +14,38 @@ export default function ModuleCard({ module }: ModuleCardProps) {
     : started
     ? { label: 'In progress', className: 'bg-[#1F7A8C]/15 text-[#2EA8BE] border-[#1F7A8C]/30' }
     : !unlocked
-    ? { label: 'Locked', className: 'bg-[#2A3044] text-[#8A93A8] border-[#2A3044]' }
+    ? { label: 'Locked', className: 'bg-[#2A3044]/60 text-[#8A93A8] border-[#2A3044]' }
     : { label: 'Not started', className: 'bg-[#232940] text-[#8A93A8] border-[#2A3044]' }
+
+  const cta = completed ? 'Review' : started ? 'Continue →' : 'Start →'
+  const ctaColor = completed
+    ? 'text-[#8A93A8] hover:text-[#C5CAD8]'
+    : 'text-[#2EA8BE] hover:text-[#1F7A8C]'
 
   const cardContent = (
     <div
-      className={`h-full bg-[#1C2030] border rounded-xl p-5 flex flex-col transition-colors ${
+      className={`h-full bg-[#1C2030] border rounded-xl p-5 flex flex-col transition-all duration-150 ${
         unlocked
-          ? 'border-[#2A3044] hover:border-[#1F7A8C]/50 hover:bg-[#232940] cursor-pointer'
-          : 'border-[#2A3044] opacity-60 cursor-not-allowed'
+          ? 'border-[#2A3044] hover:border-[#1F7A8C]/60 hover:bg-[#232940] cursor-pointer group'
+          : 'border-[#2A3044] opacity-50 cursor-not-allowed'
       }`}
     >
-      {/* Header */}
+      {/* Header row */}
       <div className="flex items-start justify-between gap-2 mb-3">
         <span className="font-mono text-xs text-[#8A93A8]">{code}</span>
-        <Badge className={`text-[10px] shrink-0 ${statusBadge.className}`}>
+        <Badge className={`text-[10px] shrink-0 border ${statusBadge.className}`}>
           {statusBadge.label}
         </Badge>
       </div>
 
-      {/* Level */}
-      <p className="text-[10px] text-[#1F7A8C] font-medium uppercase tracking-wider mb-1">
+      {/* Level label */}
+      <p className="text-[10px] text-[#1F7A8C] font-medium uppercase tracking-wider mb-1.5">
         {level_label}
       </p>
 
       {/* Title */}
       <h3
-        className="text-[#F2F4F8] font-semibold text-base leading-snug mb-1.5"
+        className="text-[#F2F4F8] font-semibold text-base leading-snug mb-2"
         style={{ fontFamily: 'Georgia, serif' }}
       >
         {title}
@@ -52,8 +57,15 @@ export default function ModuleCard({ module }: ModuleCardProps) {
       {/* Footer */}
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#2A3044]">
         <span className="text-[#8A93A8] text-xs">{duration_min} min</span>
-        {completed && score !== null && (
-          <span className="text-[#4CAF75] text-xs font-medium">{score}%</span>
+        {unlocked && (
+          <span className={`text-xs font-medium transition-colors ${ctaColor}`}>
+            {completed && score !== null
+              ? `${score}% · ${cta}`
+              : cta}
+          </span>
+        )}
+        {!unlocked && (
+          <span className="text-[#8A93A8] text-xs">🔒</span>
         )}
       </div>
     </div>
