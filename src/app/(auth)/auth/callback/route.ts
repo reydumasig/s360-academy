@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
 
   if (code) {
+    // User client handles the OAuth exchange and sets session cookies
     const supabase = await createClient()
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
@@ -15,21 +16,26 @@ export async function GET(request: Request) {
         data.user.email?.split('@')[0] ||
         'Pathfinder'
 
-      // Check if learner row already exists (returning user vs first login)
-      const { data: existing } = await supabase
+      // Admin client bypasses RLS for reliable DB reads/writes on this server route
+      const admin = await createAdminClient()
+
+      const { data: existing } = await admin
         .from('learners')
         .select('id')
         .eq('id', data.user.id)
         .single()
 
       if (!existing) {
-        // First login — create row and send to profile setup
-        await supabase.from('learners').insert({
+        const { error: insertErr } = await admin.from('learners').insert({
           id: data.user.id,
           name: displayName,
           role: 'Summit 360 Pathfinder',
           last_seen_at: new Date().toISOString(),
         })
+
+        if (insertErr) {
+          console.error('[callback] learner insert failed:', insertErr.message)
+        }
 
         const setupUrl = new URL('/setup', origin)
         setupUrl.searchParams.set('name', displayName)
@@ -37,7 +43,7 @@ export async function GET(request: Request) {
       }
 
       // Returning user — update last seen and go straight to academy
-      await supabase
+      await admin
         .from('learners')
         .update({ last_seen_at: new Date().toISOString() })
         .eq('id', data.user.id)

@@ -2,7 +2,6 @@
 
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,7 +9,6 @@ import { Label } from '@/components/ui/label'
 function SetupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const supabase = createClient()
 
   const [name, setName] = useState(searchParams.get('name') ?? '')
   const [role, setRole] = useState('Summit 360 Pathfinder')
@@ -27,16 +25,20 @@ function SetupForm() {
     setLoading(true)
     setError(null)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/login'); return }
-
-    const { error: upsertError } = await supabase.from('learners').upsert(
-      { id: user.id, name: name.trim(), role: role.trim() || 'Summit 360 Pathfinder' },
-      { onConflict: 'id' }
-    )
-
-    if (upsertError) {
-      setError(upsertError.message || 'Something went wrong. Please try again.')
+    try {
+      const res = await fetch('/api/profile/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), role: role.trim() }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setError(json.error || 'Something went wrong. Please try again.')
+        setLoading(false)
+        return
+      }
+    } catch {
+      setError('Network error. Please try again.')
       setLoading(false)
       return
     }
