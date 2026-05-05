@@ -1,6 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { getCertId } from '@/lib/modules'
+import { sendCertificateEmail } from '@/lib/email'
 import type { ModuleContentSchema, KcItem } from '@/types'
 import type { Json } from '@/types/database'
 
@@ -61,10 +62,42 @@ export async function POST(request: Request, { params }: RouteParams) {
     )
 
     const certId = getCertId(code)
-    await supabase.from('certificates').upsert(
-      { learner_id: user.id, module_code: code, cert_id: certId },
-      { onConflict: 'cert_id', ignoreDuplicates: true }
-    )
+    const { data: existingCert } = await supabase
+      .from('certificates')
+      .select('id')
+      .eq('cert_id', certId)
+      .single()
+
+    if (!existingCert) {
+      await supabase.from('certificates').insert({
+        learner_id: user.id, module_code: code, cert_id: certId,
+      })
+
+      // Fetch learner name + email for the certificate email
+      try {
+        const admin = createAdminClient()
+        const [{ data: learnerRow }, { data: moduleRow }, { data: authUser }] = await Promise.all([
+          admin.from('learners').select('name').eq('id', user.id).single(),
+          admin.from('modules').select('title,level_label').eq('code', code).single(),
+          admin.auth.admin.getUserById(user.id),
+        ])
+
+        if (learnerRow && moduleRow && authUser.user?.email) {
+          await sendCertificateEmail({
+            to: authUser.user.email,
+            learnerName: (learnerRow as { name: string }).name,
+            moduleTitle: (moduleRow as { title: string; level_label: string }).title,
+            levelLabel: (moduleRow as { title: string; level_label: string }).level_label,
+            certId,
+            moduleCode: code,
+            issuedAt: now,
+          })
+        }
+      } catch (emailErr) {
+        // Email failure should not block the response
+        console.error('[submit] certificate email failed:', emailErr)
+      }
+    }
   }
 
   return NextResponse.json({ score, passed, results })
