@@ -1,0 +1,105 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* S360 Design System — mapped to shadcn CSS variables */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-inter);
+  --font-serif: Georgia, "Times New Roman", serif;
+  --font-mono: Consolas, "Courier New", monospace;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  /* S360 brand tokens — available as Tailwind utilities */
+  --color-s360-teal: var(--s360-teal);
+  --color-s360-teal-hi: var(--s360-teal-hi);
+  --color-s360-coral: var(--s360-coral);
+  --color-s360-coral-hi: var(--s360-coral-hi);
+  --color-s360-gold: var(--s360-gold);
+  --color-s360-green: var(--s360-green);
+  --color-s360-red: var(--s360-red);
+  --color-s360-charcoal: var(--s360-charcoal);
+  --color-s360-charcoal-soft: var(--s360-charcoal-soft);
+  --color-s360-card: var(--s360-card);
+  --color-s360-card-hi: var(--s360-card-hi);
+  --color-s360-border: var(--s360-border);
+  --color-s360-ink: var(--s360-ink);
+  --color-s360-ink-mid: var(--s360-ink-mid);
+  --color-s360-ink-dim: var(--s360-ink-dim);
+}
+
+/* The academy is always dark — charcoal theme is the only theme */
+:root {
+  /* S360 brand tokens */
+  --s360-charcoal: #0F1115;
+  --s360-charcoal-soft: #161922;
+  --s360-card: #1C2030;
+  --s360-card-hi: #232940;
+  --s360-border: #2A3044;
+  --s360-ink: #F2F4F8;
+  --s360-ink-mid: #C5CAD8;
+  --s360-ink-dim: #8A93A8;
+  --s360-teal: #1F7A8C;
+  --s360-teal-hi: #2EA8BE;
+  --s360-coral: #E15A4C;
+  --s360-coral-hi: #FF7A6A;
+  --s360-gold: #E7C36A;
+  --s360-green: #4CAF75;
+  --s360-red: #D3594C;
+
+  /* shadcn variables mapped to S360 palette */
+  --background: #0F1115;
+  --foreground: #F2F4F8;
+  --card: #1C2030;
+  --card-foreground: #F2F4F8;
+  --popover: #161922;
+  --popover-foreground: #F2F4F8;
+  --primary: #1F7A8C;
+  --primary-foreground: #F2F4F8;
+  --secondary: #161922;
+  --secondary-foreground: #C5CAD8;
+  --muted: #1C2030;
+  --muted-foreground: #8A93A8;
+  --accent: #232940;
+  --accent-foreground: #F2F4F8;
+  --destructive: #E15A4C;
+  --destructive-foreground: #F2F4F8;
+  --border: #2A3044;
+  --input: #2A3044;
+  --ring: #1F7A8C;
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-inter), system-ui, sans-serif;
+  }
+  h1, h2 {
+    font-family: Georgia, "Times New Roman", serif;
+  }
+}
