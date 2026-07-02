@@ -1,8 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+
+export const dynamic = 'force-dynamic'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
@@ -31,11 +34,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#0F1115] px-4">
       {/* Brand */}
       <div className="mb-10 text-center">
-        <div className="inline-flex items-center gap-2 mb-4">
-          <span className="w-3 h-3 rounded-full bg-[#E15A4C]" />
-          <span className="text-[#F2F4F8] font-semibold tracking-wide text-sm uppercase">
-            Summit 360
-          </span>
+        <div className="flex justify-center mb-6">
+          <Image src="/logo.png" alt="Summit 360" width={120} height={48} className="object-contain" priority />
         </div>
         <h1
           className="text-4xl font-bold text-[#F2F4F8] mb-2"
