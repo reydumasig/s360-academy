@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -21,21 +22,19 @@ export default function Nav({ learnerName, isAdmin }: NavProps) {
   }
 
   const links = [
-    { href: '/', label: 'Modules' },
+    { href: '/modules', label: 'Modules' },
     { href: '/certificates', label: 'Certificates' },
     { href: '/dashboard', label: 'Dashboard' },
+    { href: '/leaderboard', label: 'Leaderboard' },
     ...(isAdmin ? [{ href: '/admin', label: 'Admin' }] : []),
   ]
 
   return (
-    <header className="border-b border-[#2A3044] bg-[#161922] sticky top-0 z-50">
+    <header className="border-b border-[#2A3044] bg-[#161922]/80 backdrop-blur sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#E15A4C]" />
-          <span className="text-[#F2F4F8] font-semibold text-sm tracking-wide">
-            S360 Academy
-          </span>
+        <Link href="/modules" className="flex items-center shrink-0 py-2">
+          <Image src="/logo.png" alt="Summit 360" width={48} height={20} className="object-contain" priority />
         </Link>
 
         {/* Nav links */}

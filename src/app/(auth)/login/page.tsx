@@ -1,20 +1,41 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 
 export const dynamic = 'force-dynamic'
 
+const ERROR_MESSAGES: Record<string, string> = {
+  unauthorized_domain: 'Access is restricted to @s360team.com Google accounts.',
+  auth_failed: 'Sign-in failed. Please try again.',
+}
+
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageContent />
+    </Suspense>
+  )
+}
+
+function LoginPageContent() {
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [clientError, setClientError] = useState<string | null>(null)
   const supabase = createClient()
+
+  const urlErrorCode = searchParams.get('error')
+  const urlError = urlErrorCode
+    ? ERROR_MESSAGES[urlErrorCode] ?? 'Something went wrong. Please try again.'
+    : null
+  const error = clientError ?? urlError
 
   async function handleGoogleLogin() {
     setLoading(true)
-    setError(null)
+    setClientError(null)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -25,7 +46,7 @@ export default function LoginPage() {
       },
     })
     if (error) {
-      setError(error.message)
+      setClientError(error.message)
       setLoading(false)
     }
   }

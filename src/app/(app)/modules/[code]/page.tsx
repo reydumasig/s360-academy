@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { isUnlocked, MODULE_ORDER } from '@/lib/modules'
+import { isUnlocked } from '@/lib/modules'
 import KnowledgeCheck from '@/components/modules/knowledge-check'
 import type { ModuleWithProgress, ModuleContentSchema } from '@/types'
 import type { Module } from '@/types/database'
@@ -18,8 +18,9 @@ export default async function ModulePage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: moduleRaw }, { data: progressRaw }] = await Promise.all([
+  const [{ data: moduleRaw }, { data: allModulesRaw }, { data: progressRaw }] = await Promise.all([
     supabase.from('modules').select('*').eq('code', code).single(),
+    supabase.from('modules').select('code,sort_order').order('sort_order'),
     supabase.from('module_progress').select('module_code,completed_at,score').eq('learner_id', user.id),
   ])
 
@@ -28,12 +29,12 @@ export default async function ModulePage({ params }: PageProps) {
   const allProgress = (progressRaw ?? []) as ProgressRow[]
   const progressMap = new Map(allProgress.map((p) => [p.module_code, p]))
 
-  // Build full module list for isUnlocked (using MODULE_ORDER so all modules are represented)
-  const allModules: ModuleWithProgress[] = MODULE_ORDER.map((c) => {
-    const p = progressMap.get(c)
+  // Build full module list for isUnlocked using DB sort_order (covers OB + PF codes)
+  const allModules: ModuleWithProgress[] = (allModulesRaw ?? []).map((m) => {
+    const p = progressMap.get(m.code)
     return {
-      code: c, title: '', subtitle: '', level_key: '', level_label: '',
-      duration_min: 0, sort_order: 0,
+      code: m.code, title: '', subtitle: '', level_key: '', level_label: '',
+      duration_min: 0, sort_order: m.sort_order,
       started: !!p,
       completed: !!p?.completed_at,
       score: p?.score ?? null,
@@ -41,7 +42,7 @@ export default async function ModulePage({ params }: PageProps) {
     }
   })
 
-  if (!isUnlocked(code, allModules)) redirect('/')
+  if (!isUnlocked(code, allModules)) redirect('/modules')
 
   // Mark module as started (no-op if already exists)
   await supabase.from('module_progress').upsert(
@@ -66,7 +67,7 @@ export default async function ModulePage({ params }: PageProps) {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
 
       {/* Back link */}
-      <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-[#8A93A8] hover:text-[#C5CAD8] mb-8 transition-colors">
+      <Link href="/modules" className="inline-flex items-center gap-1.5 text-xs text-[#8A93A8] hover:text-[#C5CAD8] mb-8 transition-colors">
         ← Back to Academy
       </Link>
 

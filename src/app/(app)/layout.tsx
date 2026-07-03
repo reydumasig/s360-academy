@@ -16,7 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const learner = learnerRaw as { name: string; role: string; is_admin: boolean } | null
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0F1115]">
+    <div className="min-h-screen flex flex-col">
       <Nav
         learnerName={learner?.name ?? user.email ?? 'Pathfinder'}
         isAdmin={learner?.is_admin ?? false}

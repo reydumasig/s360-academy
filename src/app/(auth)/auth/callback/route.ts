@@ -1,6 +1,8 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+const ALLOWED_EMAIL_DOMAIN = 's360team.com'
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
@@ -11,6 +13,14 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error && data.user) {
+      const email = data.user.email ?? ''
+      if (!email.toLowerCase().endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)) {
+        // The `hd` param on the login page is only a Google consent-screen hint,
+        // not an enforced restriction — any Google account can reach this point.
+        await supabase.auth.signOut()
+        return NextResponse.redirect(`${origin}/login?error=unauthorized_domain`)
+      }
+
       const displayName =
         data.user.user_metadata?.full_name ||
         data.user.email?.split('@')[0] ||

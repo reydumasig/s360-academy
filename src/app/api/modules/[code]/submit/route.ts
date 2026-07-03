@@ -18,15 +18,35 @@ export async function POST(request: Request, { params }: RouteParams) {
   const body = await request.json()
   const { answers } = body as { answers: (number | string)[] }
 
-  const { data: moduleRaw } = await supabase
+  const { data: allModulesRaw } = await supabase
     .from('modules')
-    .select('code,pass_score,content')
-    .eq('code', code)
-    .single()
+    .select('code,sort_order,pass_score,content')
+    .order('sort_order')
 
-  if (!moduleRaw) return NextResponse.json({ error: 'Module not found' }, { status: 404 })
+  const allModules = (allModulesRaw ?? []) as { code: string; sort_order: number; pass_score: number; content: Json }[]
+  const moduleData = allModules.find((m) => m.code === code)
 
-  const moduleData = moduleRaw as { code: string; pass_score: number; content: Json }
+  if (!moduleData) return NextResponse.json({ error: 'Module not found' }, { status: 404 })
+
+  const precedingCodes = allModules
+    .filter((m) => m.sort_order < moduleData.sort_order)
+    .map((m) => m.code)
+
+  if (precedingCodes.length > 0) {
+    const { data: completedRaw } = await supabase
+      .from('module_progress')
+      .select('module_code')
+      .eq('learner_id', user.id)
+      .in('module_code', precedingCodes)
+      .not('completed_at', 'is', null)
+
+    const completedCodes = new Set((completedRaw ?? []).map((r) => (r as { module_code: string }).module_code))
+    const unlocked = precedingCodes.every((c) => completedCodes.has(c))
+    if (!unlocked) {
+      return NextResponse.json({ error: 'Complete the preceding modules first' }, { status: 403 })
+    }
+  }
+
   const content = moduleData.content as unknown as ModuleContentSchema
   const kcItems: KcItem[] = content?.kc?.items ?? []
 
@@ -61,11 +81,12 @@ export async function POST(request: Request, { params }: RouteParams) {
       { onConflict: 'learner_id,module_code' }
     )
 
-    const certId = getCertId(code)
+    const certId = getCertId(code, user.id)
     const { data: existingCert } = await supabase
       .from('certificates')
       .select('id')
-      .eq('cert_id', certId)
+      .eq('learner_id', user.id)
+      .eq('module_code', code)
       .single()
 
     if (!existingCert) {
@@ -94,8 +115,9 @@ export async function POST(request: Request, { params }: RouteParams) {
           })
         }
       } catch (emailErr) {
-        // Email failure should not block the response
-        console.error('[submit] certificate email failed:', emailErr)
+        // Certificate is already issued and viewable in-app — email is a courtesy
+        // notification only, so a delivery failure should not block the response.
+        console.error(`[submit] certificate email failed for learner=${user.id} module=${code}:`, emailErr)
       }
     }
   }

@@ -26,7 +26,7 @@ export default async function CertificatePage({ params }: PageProps) {
   if (!certRaw || !moduleRaw) notFound()
 
   const cert = certRaw as CertRow
-  const module = moduleRaw as ModuleRow
+  const courseModule = moduleRaw as ModuleRow
   const learner = (learnerRaw as LearnerRow | null) ?? { name: 'Pathfinder', role: 'Summit 360 Pathfinder' }
 
   const issuedDate = new Date(cert.issued_at).toLocaleDateString('en-US', {
@@ -89,13 +89,13 @@ export default async function CertificatePage({ params }: PageProps) {
               </p>
               <div className="space-y-1">
                 <p className="text-[10px] text-[#1F7A8C] font-semibold uppercase tracking-widest">
-                  {module.level_label}
+                  {courseModule.level_label}
                 </p>
                 <h2
                   className="text-[#F2F4F8] print:text-[#222] font-semibold leading-snug"
                   style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(14px, 2.5vw, 20px)' }}
                 >
-                  {module.title}
+                  {courseModule.title}
                 </h2>
               </div>
             </div>
